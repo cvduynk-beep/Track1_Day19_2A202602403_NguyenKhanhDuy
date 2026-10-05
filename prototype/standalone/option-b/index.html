@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lớp học online · Ghi chú khi nghe giảng (B)</title>
+<style>
+  :root {
+    --bg: #0f172a; --card: #1e293b; --ink: #e2e8f0; --muted: #94a3b8; --line: #334155;
+    --accent: #6366f1; --accent-soft: #2e3170; --warn: #fcd34d; --warn-soft: #4a3a10;
+    --ok: #86efac; --ok-soft: #14532d; --red: #ef4444; --field: #0f172a; --panel: #162033;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.5 system-ui, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
+  header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: var(--card); border-bottom: 1px solid var(--line); }
+  main { max-width: 1280px; margin: 0 auto; padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  h2 { font-size: 16px; margin: 0 0 8px; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+  button { font: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 8px; padding: 6px 12px; }
+  button:hover:not(:disabled) { border-color: var(--accent); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  select option { background: var(--card); color: var(--ink); }
+  button.small { padding: 2px 9px; font-size: 13px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .live { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; margin-right: 6px; }
+  .frame { aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #fff; border: 1px solid var(--line); }
+  input[type=text], select { background: var(--field); color: var(--ink); }
+  .frame img { width: 100%; height: 100%; display: block; object-fit: contain; }
+  .slidenav { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 8px 0; }
+  .slidenav select { font: inherit; padding: 4px 8px; border: 1px solid var(--line); border-radius: 8px; max-width: 60%; }
+  .speech { display: flex; gap: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+  .speech .av { font-size: 26px; }
+  .speech b.t { display: block; font-size: 13px; color: var(--muted); }
+  .speech p { margin: 2px 0 0; }
+  .speech strong { color: #fde047; }
+  .tag { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); background: var(--panel); margin-right: 6px; }
+  .tag.ai { background: var(--accent-soft); border-color: #4f52b2; color: #c7d2fe; }
+  .tag.low { background: var(--warn-soft); border-color: #7a5e14; color: var(--warn); }
+  input[type=text] { font: inherit; width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; }
+  .empty { color: var(--muted); font-size: 13px; padding: 4px 2px; }
+  .pin { display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin-bottom: 10px; background: var(--panel); }
+  .pin .l { flex: 1; min-width: 0; }
+  .thumb { width: 220px; flex: none; position: relative; border: 1px solid var(--line); cursor: pointer; line-height: 0; }
+  .thumb img { width: 100%; }
+  @media (max-width: 560px) { .pin { flex-direction: column; } }
+  .rbox { position: absolute; border: 2px solid var(--red); background: rgba(212,0,0,.12); }
+  .modal { position: fixed; inset: 0; background: rgba(15,23,42,.6); display: flex; align-items: center; justify-content: center; z-index: 10; padding: 12px; }
+  .mbox { background: var(--card); border-radius: 12px; padding: 16px; width: min(900px, 100%); max-height: 100%; overflow: auto; }
+  .big { position: relative; line-height: 0; border: 1px solid var(--line); margin-bottom: 10px; user-select: none; touch-action: none; }
+  .big img { width: 100%; }
+  .big .rbox { cursor: move; }
+  .big .h { position: absolute; right: -7px; bottom: -7px; width: 13px; height: 13px; background: var(--red); cursor: nwse-resize; }
+  .saved { background: var(--ok-soft); border: 1px solid #1f7a3d; border-radius: 8px; padding: 6px 12px; margin-bottom: 10px; color: var(--ok); }
+</style>
+</head>
+<body>
+<header>
+  <strong>Lớp học online · Session 4: Stakeholder</strong>
+  <span class="muted">Slide-Anchored Snapshot</span>
+</header>
+<main>
+  <section>
+    <div class="live"><span><span class="dot"></span>ĐANG HỌC TRỰC TUYẾN · <span id="vtime"></span></span><span class="muted" id="slidelbl"></span></div>
+    <div class="slidenav">
+      <button class="small" id="prev">◀ Trước</button>
+      <select id="sel" title="Chọn slide"></select>
+      <button class="small" id="next">Tiếp ▶</button>
+    </div>
+    <div class="frame"><img id="slideimg" alt="Slide bài giảng"></div>
+    <div class="speech" style="margin-top:10px"><div class="av">👨‍🏫</div><div><b class="t" id="vtopic"></b><p id="vquote"></p></div></div>
+  </section>
+  <section>
+    <div class="card" id="panel"></div>
+  </section>
+</main>
+
+<script>
+/* ---------- Dữ liệu dùng chung: bộ slide Stakeholder (22 slide, ảnh render từ ảnh của Option A) ---------- */
+const W = 1280, H = 720, TOTAL = 22;
+const PARAMS = new URLSearchParams(location.search);
+const START = Math.min(22, Math.max(1, parseInt(PARAMS.get("slide") || "4", 10) || 4));
+const img = n => `slides/s${String(n).padStart(2, "0")}.jpg`;
+const bx = (x1, y1, x2, y2) => [x1 - 3, y1 - 3, x2 + 3, y2 + 3];
+const TITLE_BOX = [60, 60, 560, 140];
+const TITLES = ["Giới thiệu Session 4 - Stakeholder", "Mục lục Topic buổi học", "Khái niệm Đội ngũ Đa chức năng", "Agile Scrum Events",
+  "Mô hình phát triển nhóm Tuckman", "Ma trận RASIC", "Bộ công cụ làm việc nhóm", "Giải lao và hỏi đáp nhanh", "Bắt đầu phần Workshop nhóm",
+  "Bài tập 1: Xây dựng ma trận RASIC", "Chuyển tiếp Part 2: Stakeholder Engagement", "Quy trình quản trị Stakeholder", "Định nghĩa Bên liên quan",
+  "Mô hình phong cách giao tiếp DISC", "Phân tích Stakeholder (Power vs Interest)", "Mẫu bảng chiến lược Stakeholder", "Tình huống thực tế: ứng xử với Stakeholder",
+  "Các yếu tố quan hệ trong tổ chức", "Nguyên tắc giao tiếp với Stakeholder", "Thực hành đóng vai xử lý tình huống", "Bài tập 2: Chiến lược Stakeholder nghề nghiệp", "Q&A và tổng kết buổi học"];
+
+/* Từ viết tắt có hộp khoanh: slide 4 (Scrum) khớp từ khóa của Option A; slide 6 (RASIC) */
+const SLIDES = {
+  4: { concepts: [
+    { aliases: ["daily", "daily scrum", "ds"], cue: "Daily Scrum", box: bx(738, 415, 872, 548) },
+    { aliases: ["retro", "retrospective", "sprint retro"], cue: "Sprint Retro", box: bx(468, 205, 602, 335) },
+    { aliases: ["sprint", "sp"], cue: "Sprint", box: bx(606, 216, 730, 254) },
+    { aliases: ["planning", "sp plan"], cue: "Sprint Planning", box: bx(736, 224, 878, 352) },
+    { aliases: ["review", "sprint review"], cue: "Sprint Review", box: bx(468, 412, 602, 545) },
+    { aliases: ["pb", "product backlog"], cue: "Product Backlog", box: bx(830, 163, 982, 188) },
+    { aliases: ["dod"], cue: "Definition of Done", box: bx(612, 545, 725, 610) }
+  ] },
+  6: { concepts: [
+    { aliases: ["rasic"], cue: "RASIC", box: bx(72, 68, 600, 118) },
+    { aliases: ["l"], cue: "L · Làm trực tiếp", box: bx(84, 150, 372, 168) },
+    { aliases: ["h"], cue: "H · Hỗ trợ", box: bx(84, 167, 372, 185) },
+    { aliases: ["p"], cue: "P · Phê duyệt", box: bx(84, 183, 372, 201) },
+    { aliases: ["c"], cue: "C · Cố vấn", box: bx(84, 200, 372, 218) },
+    { aliases: ["t"], cue: "T · Thông báo", box: bx(84, 217, 372, 235) }
+  ] }
+};
+const LOOK = {};
+Object.entries(SLIDES).forEach(([n, s]) => { LOOK[n] = {}; s.concepts.forEach(c => c.aliases.forEach(a => LOOK[n][a] = c)); });
+/* Lời giảng giả lập và mốc thời gian của từng slide (cùng dữ liệu với Option A) */
+const META = {
+ "1": {
+  "time": "01:10",
+  "topic": "Giảng viên mở đầu bài giảng:",
+  "quote": "\"...Chào mừng các bạn đến với Session 4 về <strong>Stakeholder & Cross-Functional Team</strong>. Hôm nay chúng ta sẽ tìm hiểu cách phối hợp đa chức năng và gắn kết các bên liên quan hiệu quả...\""
+ },
+ "2": {
+  "time": "03:45",
+  "topic": "Giảng viên trình bày lộ trình 2 nội dung chính:",
+  "quote": "\"...Trong buổi hôm nay, chúng ta có 2 phần cốt lõi: phần 1 là <strong>Cross-Functional Team</strong> (Đội ngũ đa chức năng) và phần 2 là <strong>Stakeholder Engagement</strong> (Gắn kết các bên liên quan)...\""
+ },
+ "3": {
+  "time": "06:20",
+  "topic": "Giảng viên phân tích mô hình làm việc nhóm đa chức năng:",
+  "quote": "\"...Một <strong>Cross-Functional Team</strong> chuẩn không chia theo phòng ban tách biệt, mà gom đủ Dev, Design, QA, Product cùng ngồi lại để giải quyết trọn vẹn một bài toán người dùng...\""
+ },
+ "4": {
+  "time": "09:30",
+  "topic": "Giảng viên đang nói nhanh (Quy trình Agile Scrum):",
+  "quote": "\"...Các bạn lưu ý trong Scrum có các sự kiện cố định: <strong>Sprint Planning</strong> để lập kế hoạch, <strong>Daily Scrum</strong> 15 phút mỗi ngày, <strong>Sprint Review</strong> để demo sản phẩm và <strong>Retro (Retrospective)</strong> để cải tiến quy trình nhé...\""
+ },
+ "5": {
+  "time": "12:15",
+  "topic": "Giảng viên giảng về các giai đoạn phát triển nhóm:",
+  "quote": "\"...Nhóm nào mới lập cũng phải qua 4 giai đoạn: <strong>Forming</strong> (Hình thành), <strong>Storming</strong> (Sóng gió/Xung đột), <strong>Norming</strong> (Ổn định/Chuẩn hóa) rồi mới tới <strong>Performing</strong> (Hiệu suất đỉnh cao)...\""
+ },
+ "6": {
+  "time": "14:20",
+  "topic": "Giảng viên đang nói nhanh (Ma trận RASIC):",
+  "quote": "\"...Các bạn chú ý chữ <strong>L</strong> ở đây là <strong>Làm trực tiếp</strong>, người chịu trách nhiệm hoàn thành. Còn chữ <strong>P</strong> là <strong>Phê duyệt</strong> kết quả nhé...\""
+ },
+ "7": {
+  "time": "17:05",
+  "topic": "Giảng viên giới thiệu các công cụ quản lý dự án:",
+  "quote": "\"...Để quản lý tiến độ minh bạch, các bạn cần sử dụng các bộ công cụ phối hợp như <strong>Jira/Trello</strong> cho Kanban board, <strong>Notion/Confluence</strong> cho tài liệu và <strong>Slack</strong> để trao đổi tức thì...\""
+ },
+ "8": {
+  "time": "19:40",
+  "topic": "Giảng viên thông báo nghỉ giải lao ngắn 5 phút:",
+  "quote": "\"...Chúng ta vừa xong phần 1 về Đội ngũ đa chức năng. Các bạn nghỉ giải lao 5 phút và chuẩn bị vào phần thực hành nhé...\""
+ },
+ "9": {
+  "time": "21:10",
+  "topic": "Giảng viên khởi động phiên thực hành tương tác:",
+  "quote": "\"...Nào các bạn, bây giờ chúng ta cùng mở bài tập và bắt tay vào áp dụng khung phân vai RASIC cho chính lớp học của mình nhé...\""
+ },
+ "10": {
+  "time": "23:30",
+  "topic": "Giảng viên giao bài tập tình huống RASIC:",
+  "quote": "\"...Hãy liệt kê các đầu việc của lớp: điểm danh, tài liệu, nộp bài tập... sau đó gán chữ L, P, H, C, T cho từng bạn trong ban cán sự...\""
+ },
+ "11": {
+  "time": "25:00",
+  "topic": "Giảng viên chuyển sang phần 2 của buổi học:",
+  "quote": "\"...Bây giờ chúng ta bước sang chủ đề cốt lõi tiếp theo: <strong>Stakeholder Engagement</strong> - Nghệ thuật quản trị và làm việc với các bên liên quan...\""
+ },
+ "12": {
+  "time": "26:40",
+  "topic": "Giảng viên hướng dẫn 4 bước tương tác bên liên quan:",
+  "quote": "\"...Quy trình quản trị Stakeholder gồm 4 bước liên hoàn: <strong>Identification</strong> (Nhận diện), <strong>Definition</strong> (Định nghĩa kỳ vọng), <strong>Analysis</strong> (Phân tích mức độ ảnh hưởng) và <strong>Strategy</strong> (Chiến lược tiếp cận)...\""
+ },
+ "13": {
+  "time": "27:30",
+  "topic": "Giảng viên định nghĩa rõ ràng về Stakeholder:",
+  "quote": "\"...Nhớ rằng Stakeholder có thể là <strong>Cá nhân (Individuals)</strong> hoặc <strong>Nhóm (Groups)</strong>, bao gồm cả Khách hàng, Sếp trực tiếp, Dev Team và Đối tác bên ngoài...\""
+ },
+ "14": {
+  "time": "28:15",
+  "topic": "Giảng viên đang nói nhanh (Mô hình DISC):",
+  "quote": "\"...Nhóm <strong>D - Dominance</strong> thì thích quyền lực và chỉ quan tâm đến kết quả nhanh gọn. Còn nhóm <strong>I - Influence</strong> thì thích sự hòa đồng, cởi mở nhé...\""
+ },
+ "15": {
+  "time": "33:40",
+  "topic": "Giảng viên đang nói nhanh (Ma trận Power vs Interest):",
+  "quote": "\"...Ở ô <strong>High Power & High Interest</strong>, đây là các bên liên quan then chốt, chiến lược bắt buộc là phải <strong>Quản lý chặt chẽ (Manage Closely)</strong>...\""
+ },
+ "16": {
+  "time": "35:20",
+  "topic": "Giảng viên hướng dẫn điền bảng ma trận Stakeholder:",
+  "quote": "\"...Bảng này có các cột then chốt: <strong>Tên bên liên quan, Phòng ban, Nhiệm vụ chính, Mục tiêu chung, Kênh liên hệ và Phong cách DISC</strong> để giao tiếp hiệu quả...\""
+ },
+ "17": {
+  "time": "37:10",
+  "topic": "Giảng viên thảo luận về các va chạm tâm lý trong dự án:",
+  "quote": "\"...Trong doanh nghiệp các bạn sẽ gặp những câu hỏi hóc búa hay câu nói kiểu cửa quyền. Để xử lý khéo léo, không được đôi co cảm tính mà phải dựa vào dữ liệu và mục tiêu chung...\""
+ },
+ "18": {
+  "time": "39:00",
+  "topic": "Giảng viên chia sẻ về văn hóa tổ chức và mạng lưới ngầm:",
+  "quote": "\"...Người ta hay đùa: Tiền tệ, Hậu duệ, Quan hệ... Nhưng trong môi trường chuyên nghiệp, yếu tố bền vững nhất giúp bạn đứng vững chính là <strong>Trí tuệ và Năng lực thực chiến</strong>...\""
+ },
+ "19": {
+  "time": "40:45",
+  "topic": "Giảng viên tổng hợp nguyên tắc tương tác:",
+  "quote": "\"...3 nguyên tắc vàng khi làm việc với Stakeholder: <strong>Minh bạch thông tin, Giao tiếp định kỳ đúng hạn</strong> và <strong>Không bao giờ hứa điều mình không làm được</strong>...\""
+ },
+ "20": {
+  "time": "42:20",
+  "topic": "Giảng viên tổ chức phiên nhập vai tương tác:",
+  "quote": "\"...Bây giờ 1 bạn đóng vai Giám đốc khó tính nhóm D đòi tính năng gấp, 1 bạn đóng vai Product Manager phải thuyết phục dựa trên Roadmap và nguồn lực thực tế...\""
+ },
+ "21": {
+  "time": "44:00",
+  "topic": "Giảng viên hướng dẫn bài tập về nhà số 2:",
+  "quote": "\"...Bài tập 2: Hãy xây dựng chiến lược Stakeholder để đạt được mục tiêu nghề nghiệp (Graduate Employability) sau khi tốt nghiệp...\""
+ },
+ "22": {
+  "time": "45:30",
+  "topic": "Giảng viên tổng kết và giải đáp thắc mắc cuối giờ:",
+  "quote": "\"...Chúng ta đã hoàn thành trọn vẹn Session 4. Các bạn có câu hỏi nào về mô hình RASIC, DISC hay ma trận Stakeholder thì đặt ngay nhé...\""
+ }
+};
+const metaOf = n => META[n];
+
+/* ---------- Tiện ích ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const tokens = v => v.trim().split(/\s+/).filter(Boolean);
+const pct = b => `left:${b[0] / W * 100}%;top:${b[1] / H * 100}%;width:${(b[2] - b[0]) / W * 100}%;height:${(b[3] - b[1]) / H * 100}%`;
+const lookup = (n, tok) => (LOOK[n] || {})[tok.toLowerCase()];
+
+let slide = START, ST = { pins: [], n: 0 };
+
+/* ---------- Context chung ---------- */
+$("#sel").innerHTML = TITLES.map((t, i) => `<option value="${i + 1}">Slide ${String(i + 1).padStart(2, "0")}: ${esc(t)}</option>`).join("");
+function updateContext() {
+  const m = metaOf(slide);
+  $("#slideimg").src = img(slide);
+  $("#slidelbl").textContent = `Slide ${String(slide).padStart(2, "0")} / ${TOTAL}`;
+  $("#vtime").textContent = "Phút " + m.time;
+  $("#vtopic").textContent = m.topic;
+  $("#vquote").innerHTML = m.quote;
+  $("#sel").value = slide;
+  $("#prev").disabled = slide <= 1; $("#next").disabled = slide >= TOTAL;
+}
+function goSlide(n) { slide = clamp(n, 1, TOTAL); updateContext(); }
+$("#prev").onclick = () => goSlide(slide - 1);
+$("#next").onclick = () => goSlide(slide + 1);
+$("#sel").onchange = e => goSlide(+e.target.value);
+
+/* ================= Option B: Ghim, AI chụp slide và khoanh vùng liên quan ================= */
+function mountB() {
+  ST = { pins: [], n: 0 };
+  $("#panel").innerHTML = `
+    <h2>Sổ ghi chép</h2>
+    <div class="row" style="flex-wrap:nowrap;margin-bottom:10px"><input id="in" type="text" autocomplete="off" spellcheck="false" placeholder="Gõ từ viết tắt rồi bấm Ghim"><button class="primary" id="pin">📌 Ghim</button></div>
+    <div id="list"></div>
+    <div class="row"><button class="primary" id="save" disabled>Lưu ghi chú</button></div>`;
+  const inp = $("#in");
+  const doPin = () => {
+    const v = inp.value.trim(); if (!v) return;
+    const hit = tokens(v).map(t => lookup(slide, t)).filter(Boolean);
+    const whole = lookup(slide, v);
+    const hits = whole ? [whole] : hit;
+    let box, unsure = false;
+    if (hits.length) {
+      const bs = hits.map(c => c.box);
+      box = [Math.min(...bs.map(b => b[0])), Math.min(...bs.map(b => b[1])), Math.max(...bs.map(b => b[2])), Math.max(...bs.map(b => b[3]))];
+    } else { box = TITLE_BOX.slice(); unsure = true; }
+    ST.pins.push({ id: ++ST.n, raw: v, slide, time: metaOf(slide).time, box, unsure, edited: false, edit: false, cues: [...new Set(hits.map(c => c.cue))] });
+    inp.value = ""; bList(); inp.focus();
+  };
+  $("#pin").onclick = doPin;
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") doPin(); });
+  $("#save").onclick = () => {
+    $("#panel").innerHTML = `<div class="saved">Đã lưu ghi chú</div>${bListHtml(true)}<div class="row"><button class="small" id="again">Làm lại</button></div>`;
+    $("#again").onclick = mountB;
+  };
+  $("#list").addEventListener("click", e => {
+    const b = e.target.closest("[data-b]"); if (!b) return;
+    const id = +b.dataset.id, p = ST.pins.find(x => x.id === id);
+    if (b.dataset.b === "del") ST.pins = ST.pins.filter(x => x.id !== id);
+    if (b.dataset.b === "edit") p.edit = true;
+    if (b.dataset.b === "ok") { const v = $("#e" + id).value.trim(); if (v) p.raw = v; p.edit = false; }
+    if (b.dataset.b === "region") return openEditor(id);
+    bList();
+  });
+  bList(); inp.focus();
+}
+function bListHtml(ro) {
+  if (!ST.pins.length) return `<div class="empty">Chưa ghim gì.</div>`;
+  return ST.pins.map(p => `
+    <div class="pin"><div class="l">
+      ${p.edit ? `<input type="text" id="e${p.id}" value="${esc(p.raw)}">` : `<strong>${esc(p.raw)}</strong>`}
+      <div class="muted">Slide ${String(p.slide).padStart(2, "0")} · ${p.time}</div>
+      <div style="margin:4px 0">${p.unsure
+        ? `<span class="tag low">Chưa chắc: không tìm thấy đoạn khớp, hãy chỉnh vùng khoanh</span>`
+        : `<span class="tag ai">AI khoanh từ slide ${String(p.slide).padStart(2, "0")}${p.cues.length ? " theo " + esc(p.cues.join(", ")) : ""}</span>`}${p.edited ? `<span class="tag">Bạn đã chỉnh vùng</span>` : ""}</div>
+      ${ro ? "" : `<div class="row">
+        <button class="small" data-b="region" data-id="${p.id}">Chỉnh vùng khoanh</button>
+        ${p.edit ? `<button class="small" data-b="ok" data-id="${p.id}">Xong</button>` : `<button class="small" data-b="edit" data-id="${p.id}">Sửa chữ</button>`}
+        <button class="small" data-b="del" data-id="${p.id}">Xóa ghim</button></div>`}
+    </div>
+    <div class="thumb" ${ro ? "" : `data-b="region" data-id="${p.id}"`}><img src="${img(p.slide)}" alt="Ảnh chụp slide ${p.slide}"><div class="rbox" style="${pct(p.box)}"></div></div></div>`).join("");
+}
+function bList() { $("#list").innerHTML = bListHtml(false); $("#save").disabled = !ST.pins.length; }
+function openEditor(id) {
+  const p = ST.pins.find(x => x.id === id);
+  let b = p.box.slice();
+  const ov = document.createElement("div");
+  ov.className = "modal";
+  ov.innerHTML = `<div class="mbox"><h2>Chỉnh vùng khoanh</h2>
+    <div class="big" id="big"><img src="${img(p.slide)}" draggable="false"><div class="rbox" id="rb"><div class="h" id="rh"></div></div></div>
+    <div class="row"><button class="primary" id="ok">Xong</button><button id="cancel">Hủy</button></div></div>`;
+  document.body.appendChild(ov);
+  const big = ov.querySelector("#big"), rb = ov.querySelector("#rb");
+  const paint = () => rb.setAttribute("style", pct(b));
+  paint();
+  let mode = null, sx = 0, sy = 0, sb = b;
+  const down = (e, m) => { e.preventDefault(); e.stopPropagation(); mode = m; sx = e.clientX; sy = e.clientY; sb = b.slice(); e.target.setPointerCapture(e.pointerId); };
+  rb.addEventListener("pointerdown", e => { if (e.target.id !== "rh") down(e, "move"); });
+  ov.querySelector("#rh").addEventListener("pointerdown", e => down(e, "size"));
+  ov.addEventListener("pointermove", e => {
+    if (!mode) return;
+    const s = W / big.getBoundingClientRect().width, dx = (e.clientX - sx) * s, dy = (e.clientY - sy) * s;
+    if (mode === "move") {
+      const w = sb[2] - sb[0], h = sb[3] - sb[1], x = clamp(sb[0] + dx, 0, W - w), y = clamp(sb[1] + dy, 0, H - h);
+      b = [x, y, x + w, y + h];
+    } else b = [sb[0], sb[1], clamp(sb[2] + dx, sb[0] + 20, W), clamp(sb[3] + dy, sb[1] + 12, H)];
+    paint();
+  });
+  ov.addEventListener("pointerup", () => { mode = null; });
+  const close = () => { ov.remove(); document.removeEventListener("keydown", onKey); };
+  const onKey = e => { if (e.key === "Escape") close(); };
+  document.addEventListener("keydown", onKey);
+  ov.querySelector("#cancel").onclick = close;
+  ov.querySelector("#ok").onclick = () => { p.box = b; p.edited = true; p.unsure = false; close(); bList(); };
+}
+
+updateContext();
+mountB();
+</script>
+<script>
+/* Alt+R trong phương án: nhờ trang hub reset về ban đầu */
+document.addEventListener('keydown', function (e) {
+  if (e.altKey && e.key.toLowerCase() === 'r' && window.parent !== window) { e.preventDefault(); window.parent.postMessage({ type: 'reset' }, '*'); }
+});
+</script>
+</body>
+</html>

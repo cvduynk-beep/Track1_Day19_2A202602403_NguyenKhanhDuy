@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Option C — Post-lecture Cornell Structuring</title>
+    <meta name="description" content="Micro-prototype Option C: AI Gemini tổng hợp ghi chú bài học thành Cornell Note sau buổi học">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+
+<!-- Header -->
+<header class="app-header">
+    <div class="header-left">
+        <span class="logo">📚 AI Cornell Notes</span>
+        <span class="breadcrumb" id="header-breadcrumb">Session 4: Stakeholder & Team Development</span>
+    </div>
+    <div class="header-center">
+        <span class="option-badge">OPTION C</span>
+        <span class="option-label">Post-lecture Cornell Structuring</span>
+    </div>
+    <div class="header-right">
+        <!-- Nút cài đặt API Key Gemini -->
+        <button id="btn-api-key" class="btn-api-key" title="Cài đặt Gemini API Key">
+            🔑 <span id="api-key-status">Gemini API</span>
+        </button>
+        <button id="btn-reset" class="btn-reset" title="Đặt lại từ đầu">🔄 Reset</button>
+    </div>
+</header>
+
+<!-- ========== STATE 1: BÀI HỌC TRÊN LỚP (SLIDES + LỜI GIẢNG + GHI CHÚ) ========== -->
+<main id="state-lecture" class="lecture-layout">
+    
+    <!-- CỘT TRÁI: SLIDE + LỜI GIẢNG VIÊN GIẢ ĐỊNH -->
+    <section class="slide-section">
+        <div class="slide-viewer">
+            <!-- Slide Top Bar -->
+            <div class="slide-top-bar">
+                <div class="slide-info">
+                    <span class="slide-counter" id="slide-counter">Slide 1 / 7</span>
+                    <span class="slide-title-text" id="slide-title-text">Session 4: Stakeholder</span>
+                </div>
+                <!-- Nút bật popup thuật ngữ -->
+                <button id="btn-toggle-terms" class="btn-terms" title="Xem thuật ngữ của slide này">
+                    <span class="terms-icon">📖</span>
+                    <span>Thuật ngữ slide</span>
+                    <span class="terms-count" id="terms-count">2</span>
+                </button>
+            </div>
+
+            <!-- Slide Image Display -->
+            <div class="slide-display">
+                <img id="current-slide-img" src="slide-0.png" alt="Slide Image" class="slide-img">
+                
+                <!-- Bảng danh sách thuật ngữ nổi (Pop-over) -->
+                <div id="terms-popover" class="terms-popover" style="display: none;">
+                    <div class="terms-popover-header">
+                        <span class="terms-popover-title">📖 Thuật ngữ slide hiện tại</span>
+                        <button id="btn-close-terms" class="btn-close-terms" title="Đóng">✕</button>
+                    </div>
+                    <ul class="terms-list" id="terms-list">
+                        <!-- Render by JS -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Lời giảng viên giả định cho từng slide -->
+            <div class="lecturer-speech-card">
+                <div class="lecturer-header">
+                    <span class="lecturer-icon">🎙️</span>
+                    <span class="lecturer-label">Giảng viên giảng (Giả định trên lớp):</span>
+                </div>
+                <p class="lecturer-text" id="lecturer-text">
+                    Chào cả lớp, hôm nay ở Session 4 chúng ta sẽ tập trung vào kỹ năng làm việc với Stakeholder — các bên liên quan. Một Product Manager giỏi không chỉ biết làm tính năng mà phải biết cách điều hòa kỳ vọng và gắn kết các bên lại với nhau.
+                </p>
+            </div>
+
+            <!-- Slide Navigation Bar (Dưới ảnh) -->
+            <div class="slide-nav-bar">
+                <button id="btn-prev-slide" class="btn-nav" disabled title="Slide trước">
+                    ◀ Trước
+                </button>
+                <div class="slide-dots" id="slide-dots">
+                    <!-- 7 dots render bằng JS -->
+                </div>
+                <button id="btn-next-slide" class="btn-nav" title="Slide tiếp theo">
+                    Sau ▶
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- CỘT PHẢI: GIAO DIỆN GHI CHÚ TỐI GIẢN -->
+    <section class="note-section">
+        <div class="note-card">
+            <div class="note-card-header">
+                <div class="note-heading">
+                    <span class="note-icon">📝</span>
+                    <h2 id="note-card-title">Ghi chú Slide 1</h2>
+                </div>
+                <span class="note-hint" id="note-hint">Lưu riêng theo slide</span>
+            </div>
+
+            <!-- Vùng nhập ghi chú theo slide -->
+            <textarea id="lecture-note-input" class="lecture-note-textarea" placeholder="Ghi chú cho slide này...
+
+• Ý chính hoặc thuật ngữ cần nhớ
+• Đặt dấu (?) cho những thắc mắc hoặc câu hỏi cần làm rõ sau này"></textarea>
+
+            <!-- Thanh chân trang ghi chú -->
+            <div class="note-card-footer">
+                <div class="note-status-info">
+                    <span class="status-indicator" id="status-indicator"></span>
+                    <span id="note-char-count">0 ký tự</span>
+                    <span class="note-slide-tag" id="note-slide-tag" style="margin-left: 8px; font-size: 11px; color: var(--accent-cyan);">Slide 1</span>
+                </div>
+
+                <!-- Nút tổng hợp (Chỉ sáng / kích hoạt ở slide cuối) -->
+                <button id="btn-summarize" class="btn-summarize" disabled title="Chuyển đến slide cuối để tổng hợp bài học">
+                    ✨ Tổng hợp note bài học
+                </button>
+            </div>
+            
+            <!-- Gợi ý ở chân ghi chú -->
+            <div class="note-footer-hint" id="note-footer-hint">
+                💡 Xem đến slide cuối cùng (7/7) để mở nút tổng hợp Cornell Note.
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- ========== STATE 2: KẾT QUẢ CORNELL NOTE (DUY NHẤT, CÓ SỬA VÀ TẢI VỀ) ========== -->
+<main id="state-cornell" class="cornell-layout" style="display: none;">
+    <div class="cornell-container">
+        
+        <!-- Thanh điều hướng và tác vụ chính -->
+        <div class="cornell-top-actions">
+            <button id="btn-back-to-slides" class="btn-cornell-secondary">
+                ◀ Quay lại Slide
+            </button>
+            
+            <div class="cornell-top-title">
+                <span class="badge-ai" id="cornell-ai-badge">🤖 Gemini LLM</span>
+                <h2>Cornell Note Tổng Hợp Bài Học</h2>
+            </div>
+
+            <!-- Bộ nút Sửa và Tải về -->
+            <div class="cornell-action-buttons">
+                <button id="btn-edit-cornell" class="btn-cornell-action" title="Chỉnh sửa nội dung Cornell Note">
+                    ✏️ Sửa ghi chú
+                </button>
+                <button id="btn-download-cornell" class="btn-cornell-action btn-download" title="Tải về bản ghi chú định dạng Markdown">
+                    📥 Tải về (.md)
+                </button>
+            </div>
+        </div>
+
+        <!-- Tờ giấy Cornell Note Duy Nhất -->
+        <div class="cornell-paper" id="cornell-paper">
+            <!-- Header thông tin -->
+            <div class="cornell-paper-header">
+                <div class="c-info-col">
+                    <span class="c-label">Chủ đề:</span>
+                    <span class="c-value" id="c-topic" contenteditable="false">Session 4: Quản trị Stakeholder & Phát triển Đội ngũ (Tuckman, Scrum, DISC)</span>
+                </div>
+                <div class="c-info-col">
+                    <span class="c-label">Ngày học:</span>
+                    <span class="c-value" id="c-date" contenteditable="false">05/10/2026</span>
+                </div>
+                <div class="c-info-col">
+                    <span class="c-label">Nguồn:</span>
+                    <span class="c-value" id="c-source" contenteditable="false">Ghi chú thực tế của người học trên 7 slide bài giảng</span>
+                </div>
+            </div>
+
+            <!-- Thân Cornell: Cột Câu hỏi cần làm rõ (28%) | Cột Nội dung bài học (72%) -->
+            <div class="cornell-paper-body">
+                <!-- Cột câu hỏi & điểm cần làm rõ (Cue Column) -->
+                <div class="cornell-cue-col">
+                    <div class="cornell-col-title">❓ CÂU HỎI & ĐIỂM CẦN LÀM RÕ (CUES)</div>
+                    <div id="cornell-cues-container" class="cues-content" contenteditable="false">
+                        <!-- Render dynamic từ Gemini hoặc fallback -->
+                    </div>
+                </div>
+
+                <!-- Cột nội dung ghi chép chi tiết (Notes Column) -->
+                <div class="cornell-notes-col">
+                    <div class="cornell-col-title">📝 NỘI DUNG BÀI HỌC CỐT LÕI (NOTES)</div>
+                    <div id="cornell-notes-container" class="notes-content" contenteditable="false">
+                        <!-- Render dynamic từ Gemini hoặc fallback -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer: Summary (Tóm tắt cốt lõi) -->
+            <div class="cornell-paper-footer">
+                <div class="cornell-col-title">📌 TÓM TẮT DỰA TRÊN GHI CHÚ BÀI HỌC (SUMMARY)</div>
+                <div id="cornell-summary-container" class="summary-text" contenteditable="false">
+                    <!-- Render dynamic từ Gemini hoặc fallback -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Thông báo chế độ chỉnh sửa -->
+        <div id="edit-mode-bar" class="edit-mode-bar" style="display: none;">
+            <span>✏️ Đang ở chế độ chỉnh sửa trực tiếp trên bản Note. Bấm vào bất kỳ đâu trên tờ giấy để sửa.</span>
+            <button id="btn-save-edit-mode" class="btn-primary-sm">💾 Hoàn tất sửa</button>
+        </div>
+    </div>
+</main>
+
+<!-- Modal cài đặt API Key Gemini -->
+<div id="api-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>🔑 Cài đặt Gemini API Key</h3>
+            <button id="btn-close-api-modal" class="btn-modal-close">✕</button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size: 13px; color: #94a3b8; margin-bottom: 12px;">
+                Nhập Google Gemini API Key để kích hoạt luồng gọi LLM thật khi tổng hợp bài học. API Key sẽ được lưu an toàn trong trình duyệt của bạn (hoặc đọc từ file <code>.env</code>).
+            </p>
+            <input type="password" id="input-api-key" class="api-key-input" placeholder="Dán Gemini API Key (AIzaSy...)" autocomplete="off">
+            <div style="font-size: 11.5px; color: #64748b; margin-top: 6px;">
+                * Nếu không có API Key, hệ thống sẽ sử dụng thuật toán tổng hợp thông minh mô phỏng chất lượng tương đương.
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="btn-clear-api-key" class="btn-cornell-secondary">Xóa Key</button>
+            <button id="btn-save-api-key" class="btn-primary-sm">Lưu cấu hình</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast" style="display: none;"></div>
+
+<script src="env.js"></script>
+<script src="app.js"></script>
+<script>
+/* Alt+R trong phương án: nhờ trang hub reset về ban đầu */
+document.addEventListener('keydown', function (e) {
+  if (e.altKey && e.key.toLowerCase() === 'r' && window.parent !== window) { e.preventDefault(); window.parent.postMessage({ type: 'reset' }, '*'); }
+});
+</script>
+</body>
+</html>

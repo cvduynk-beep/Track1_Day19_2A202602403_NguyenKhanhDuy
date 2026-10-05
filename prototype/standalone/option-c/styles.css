@@ -1,0 +1,1040 @@
+/* ===================================================================
+   OPTION C: POST-LECTURE CORNELL STRUCTURING
+   Design: Clean Minimalist Academic Slate / Gemini LLM Integration
+   Features: Slide Navigator (0-6), Per-slide Terminology Popover,
+             Per-slide Lecturer Speech Card, Minimal Side Note,
+             Single Unified Cornell Note Sheet with Edit & Download (.md)
+   =================================================================== */
+
+:root {
+    --bg-main: #0c1017;
+    --bg-card: #131924;
+    --bg-card-hover: #1a2232;
+    --bg-input: #0a0d14;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-highlight: rgba(99, 102, 241, 0.4);
+    
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --primary-glow: rgba(99, 102, 241, 0.35);
+    --accent-cyan: #06b6d4;
+    --accent-amber: #f59e0b;
+    --accent-emerald: #10b981;
+    
+    --text-title: #f8fafc;
+    --text-body: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-main);
+    color: var(--text-body);
+    line-height: 1.5;
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background-image: 
+        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.06) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(6, 182, 212, 0.05) 0%, transparent 40%);
+}
+
+
+/* ==========================================
+   APP HEADER
+   ========================================== */
+.app-header {
+    height: 52px;
+    background: rgba(19, 25, 36, 0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo {
+    font-weight: 700;
+    font-size: 15px;
+    background: linear-gradient(135deg, #a5b4fc, #38bdf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.breadcrumb {
+    color: var(--text-muted);
+    font-size: 12.5px;
+    border-left: 1px solid var(--border);
+    padding-left: 12px;
+}
+
+.header-center {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.option-badge {
+    background: var(--primary);
+    color: #fff;
+    font-weight: 700;
+    font-size: 10.5px;
+    padding: 2px 8px;
+    border-radius: 9999px;
+}
+
+.option-label {
+    font-size: 12.5px;
+    color: var(--text-muted);
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-api-key {
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    color: #c7d2fe;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-api-key:hover, .btn-api-key.configured {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+.btn-reset {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 11.5px;
+    padding: 5px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-reset:hover {
+    background: rgba(244, 63, 94, 0.15);
+    color: #f43f5e;
+}
+
+/* ==========================================
+   STATE 1: LECTURE LAYOUT (SLIDE + NOTE)
+   100vh Zero-Scroll Fixed App Layout
+   ========================================== */
+.lecture-layout {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 14px;
+    padding: 10px 18px;
+    max-width: 1720px;
+    margin: 0 auto;
+    height: calc(100vh - 52px);
+    max-height: calc(100vh - 52px);
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+/* --- Slide Section (Left) --- */
+.slide-section {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.slide-viewer {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+    min-height: 0;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.slide-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.slide-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.slide-counter {
+    background: rgba(6, 182, 212, 0.12);
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    color: var(--accent-cyan);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: var(--radius-sm);
+}
+
+.slide-title-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+}
+
+/* Terms Button */
+.btn-terms {
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    color: #c7d2fe;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition);
+}
+
+.btn-terms:hover, .btn-terms.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+.terms-count {
+    background: rgba(255, 255, 255, 0.2);
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 9999px;
+}
+
+/* Slide Display (Image) - Flex 1 with min-height 0 to fit remaining space */
+.slide-display {
+    flex: 1;
+    min-height: 0;
+    background: #0f131c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 8px 12px;
+    overflow: hidden;
+}
+
+.slide-img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+    background: #fff;
+    transition: opacity 0.15s ease-in-out;
+}
+
+/* Terminology Pop-over */
+.terms-popover {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 360px;
+    max-height: 85%;
+    background: rgba(15, 20, 30, 0.96);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    border-radius: var(--radius-md);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.7);
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.18s ease-out;
+}
+
+.terms-popover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.terms-popover-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.btn-close-terms {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.btn-close-terms:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.terms-list {
+    list-style: none;
+    padding: 8px 12px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.term-item {
+    font-size: 11.5px;
+    line-height: 1.4;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+}
+
+.term-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.term-name {
+    font-weight: 700;
+    color: var(--accent-cyan);
+    display: block;
+    margin-bottom: 1px;
+}
+
+.term-desc {
+    color: var(--text-muted);
+}
+
+/* Lecturer Speech Card - Fixed compact height with scroll */
+.lecturer-speech-card {
+    background: rgba(6, 182, 212, 0.05);
+    border-top: 1px solid rgba(6, 182, 212, 0.2);
+    border-bottom: 1px solid rgba(6, 182, 212, 0.15);
+    border-left: 3px solid var(--accent-cyan);
+    padding: 8px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 85px;
+    min-height: 65px;
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+
+.lecturer-speech-card::-webkit-scrollbar {
+    width: 4px;
+}
+
+.lecturer-speech-card::-webkit-scrollbar-thumb {
+    background: rgba(6, 182, 212, 0.35);
+    border-radius: 4px;
+}
+
+.lecturer-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.lecturer-icon {
+    font-size: 13px;
+}
+
+.lecturer-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent-cyan);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.lecturer-text {
+    font-size: 12.5px;
+    color: #e2e8f0;
+    line-height: 1.5;
+    font-style: normal;
+}
+
+/* Slide Nav Bar - Pinned Permanently At Bottom (Flex-shrink: 0) */
+.slide-nav-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 14px;
+    background: rgba(0, 0, 0, 0.4);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    height: 46px;
+}
+
+.btn-nav {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border);
+    color: #e2e8f0;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-nav:hover:not(:disabled) {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+.btn-nav:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.slide-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.slide-dot-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: var(--transition);
+}
+
+.slide-dot-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+.slide-dot-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+    box-shadow: 0 0 8px rgba(99, 102, 241, 0.5);
+}
+
+.slide-dot-btn.has-note::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    width: 4px;
+    height: 4px;
+    background: var(--accent-cyan);
+    border-radius: 50%;
+    box-shadow: 0 0 4px var(--accent-cyan);
+}
+
+/* --- Note Section (Right) - Exactly matches left column height --- */
+.note-section {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.note-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.note-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+
+.note-heading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.note-heading h2 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.note-hint {
+    font-size: 11px;
+    color: var(--text-dim);
+}
+
+.lecture-note-textarea {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 13.5px;
+    line-height: 1.65;
+    resize: none;
+    outline: none;
+    overflow-y: auto;
+    transition: var(--transition);
+}
+
+.lecture-note-textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.note-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+.note-status-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-dim);
+}
+
+.status-indicator {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--text-dim);
+}
+
+.status-indicator.active {
+    background: var(--accent-emerald);
+    box-shadow: 0 0 8px var(--accent-emerald);
+}
+
+/* Nút tổng hợp - sáng bật ở slide cuối */
+.btn-summarize {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    padding: 9px 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: not-allowed;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: var(--transition);
+}
+
+.btn-summarize.ready {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: #fff;
+    border-color: transparent;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(99, 102, 241, 0.45);
+    animation: pulseGlow 1.8s infinite alternate;
+}
+
+.btn-summarize.ready:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 22px rgba(99, 102, 241, 0.65);
+}
+
+.note-footer-hint {
+    margin-top: 8px;
+    font-size: 11.5px;
+    color: var(--text-dim);
+    text-align: right;
+    transition: var(--transition);
+}
+
+.note-footer-hint.highlight {
+    color: var(--accent-cyan);
+    font-weight: 500;
+}
+
+/* ==========================================
+   STATE 2: UNIFIED CORNELL NOTE SHEET
+   "gộp thành một bản note duy nhất có nút sửa và tải về"
+   ========================================== */
+.cornell-layout {
+    padding: 16px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    height: calc(100vh - 52px);
+    overflow-y: auto;
+}
+
+.cornell-container {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.cornell-top-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 4px;
+}
+
+.btn-cornell-secondary {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border);
+    color: var(--text-body);
+    font-size: 12.5px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-cornell-secondary:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.cornell-top-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cornell-top-title h2 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.badge-ai {
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    letter-spacing: 0.04em;
+}
+
+.cornell-action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-cornell-action {
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    color: #e0e7ff;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition);
+}
+
+.btn-cornell-action:hover {
+    background: var(--primary);
+    color: #fff;
+}
+
+.btn-download {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-color: #10b981;
+    color: #fff;
+}
+
+.btn-download:hover {
+    background: #059669;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+}
+
+/* Edit Mode Bar */
+.edit-mode-bar {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #fde68a;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12.5px;
+}
+
+/* The Cornell Note Paper Sheet */
+.cornell-paper {
+    background: #0f141f;
+    border: 1.5px solid rgba(99, 102, 241, 0.35);
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: var(--transition);
+}
+
+.cornell-paper.editable-active {
+    border-color: var(--accent-amber);
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.25);
+}
+
+.cornell-paper.editable-active [contenteditable="true"] {
+    outline: 1px dashed rgba(245, 158, 11, 0.4);
+    background: rgba(245, 158, 11, 0.03);
+    border-radius: 4px;
+    padding: 2px 4px;
+}
+
+/* Header */
+.cornell-paper-header {
+    background: rgba(99, 102, 241, 0.08);
+    border-bottom: 1.5px solid rgba(99, 102, 241, 0.25);
+    display: grid;
+    grid-template-columns: 2.2fr 1fr 1.2fr;
+    gap: 12px;
+    padding: 12px 18px;
+    font-size: 12.5px;
+}
+
+.c-info-col {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.c-label {
+    color: var(--text-dim);
+    font-weight: 600;
+}
+
+.c-value {
+    color: #fff;
+    font-weight: 500;
+}
+
+/* 2 Columns: Cue (28%) & Notes (72%) */
+.cornell-paper-body {
+    display: grid;
+    grid-template-columns: 28% 72%;
+    border-bottom: 1.5px solid rgba(99, 102, 241, 0.25);
+    min-height: 480px;
+}
+
+.cornell-col-title {
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #c7d2fe;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.cornell-cue-col {
+    border-right: 1.5px solid rgba(99, 102, 241, 0.25);
+    background: rgba(0, 0, 0, 0.15);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+}
+
+.cues-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.cue-block {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+}
+
+.cue-block:last-child {
+    border-bottom: none;
+}
+
+.cue-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #e0e7ff;
+}
+
+.cue-desc {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.cornell-notes-col {
+    padding: 18px 22px;
+    display: flex;
+    flex-direction: column;
+}
+
+.notes-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.note-section-item {
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.note-section-item:last-child {
+    border-bottom: none;
+}
+
+.note-section-item h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #38bdf8;
+    margin-bottom: 6px;
+}
+
+.note-section-item p {
+    font-size: 13px;
+    color: var(--text-body);
+    line-height: 1.6;
+    margin-bottom: 4px;
+}
+
+.note-section-item strong {
+    color: #fff;
+}
+
+.note-section-item em {
+    color: #cbd5e1;
+}
+
+/* Footer Summary */
+.cornell-paper-footer {
+    background: rgba(16, 185, 129, 0.04);
+    padding: 16px 22px;
+}
+
+.cornell-paper-footer .cornell-col-title {
+    color: #a7f3d0;
+    margin-bottom: 6px;
+}
+
+.summary-text {
+    font-size: 13px;
+    color: #d1fae5;
+    line-height: 1.6;
+}
+
+/* ==========================================
+   MODAL & TOAST
+   ========================================== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.modal-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border-highlight);
+    border-radius: var(--radius-md);
+    width: 520px;
+    max-width: 90vw;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.15s ease-out;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+    font-size: 14px;
+    color: #fff;
+}
+
+.btn-modal-close {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.btn-modal-close:hover {
+    color: #fff;
+}
+
+.modal-body {
+    padding: 16px 18px;
+}
+
+.api-key-input {
+    width: 100%;
+    background: #0a0d14;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    color: #fff;
+    font-family: monospace;
+    font-size: 13px;
+    outline: none;
+}
+
+.api-key-input:focus {
+    border-color: var(--primary);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 18px;
+    border-top: 1px solid var(--border);
+}
+
+.btn-primary-sm {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+.btn-primary-sm:hover {
+    background: var(--primary-hover);
+}
+
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(16, 185, 129, 0.95);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: var(--radius-sm);
+    font-size: 12.5px;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    z-index: 3000;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseGlow {
+    from { box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4); }
+    to { box-shadow: 0 6px 24px rgba(99, 102, 241, 0.75), 0 0 4px #fff; }
+}
+
+
+/* Chế độ test (?test=1): ẩn cài đặt API và tên cơ chế để tester không bị dẫn dắt */
+body.test-mode #btn-api-key,
+body.test-mode .header-center {
+  display: none !important;
+}

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Notes Prototype - Option A: Tự Động Mở Rộng Viết Tắt</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Simple Navigation Bar -->
+  <header class="top-nav">
+    <div class="nav-brand">
+      <span class="brand-icon">📝</span>
+      <div class="brand-info">
+        <h1>AI Notes • Option A</h1>
+        <p>Tự động mở rộng từ viết tắt theo bài giảng</p>
+      </div>
+      <button class="help-btn" data-help="overview" title="Bấm xem giải thích">?</button>
+    </div>
+
+    <!-- 3 Steps Tester Quick Guide -->
+    <div class="quick-steps-banner">
+      <span class="step-badge">Cách dùng:</span>
+      <span class="step-item"><b>1.</b> Gõ từ tắt (vd: <code>l</code> hoặc <code>rasic</code>)</span>
+      <span class="step-arrow">→</span>
+      <span class="step-item"><b>2.</b> AI gợi ý nghĩa đầy đủ</span>
+      <span class="step-arrow">→</span>
+      <span class="step-item"><b>3.</b> Bấm <b>Tab</b> để nhận</span>
+    </div>
+
+    <div class="nav-actions">
+      <button class="btn-tool" id="btnToggleGuide" title="Bật/Tắt các dấu chấm hỏi hướng dẫn">
+        <span class="icon">💡</span> Hướng dẫn (?)
+      </button>
+      <button class="btn-tool" id="btnToggleAnnotation" title="Xem ghi chú chấm điểm của bài Lab">
+        <span class="icon">📋</span> Tiêu chí Lab
+      </button>
+      <button class="btn-tool btn-reset" id="btnResetAll" title="Làm mới lại trang từ đầu">
+        <span class="icon">🔄</span> Làm lại từ đầu
+      </button>
+    </div>
+  </header>
+
+  <!-- Criteria Drawer (Gate 4 Requirement) -->
+  <div class="criteria-drawer hidden" id="criteriaDrawer">
+    <div class="criteria-box">
+      <div class="criteria-header">
+        <strong>📋 TIÊU CHÍ CHẤM ĐIỂM LAB (GATE 3 & GATE 4):</strong>
+        <button class="btn-close-drawer" id="btnCloseDrawer">✕</button>
+      </div>
+      <div class="criteria-body">
+        <p>• <b>Nhiệm vụ của Tester:</b> Giả sử bạn đang nghe thầy giảng nhanh và chỉ kịp gõ tắt chữ <code>l</code> hoặc <code>rasic</code>. Hãy trải nghiệm cách AI gợi ý nghĩa đầy đủ từ Slide 06.</p>
+        <p>• <b>Quyền làm chủ (Agency):</b> AI chỉ gợi ý, người học phải nhấn <b>Tab</b> hoặc nhấp chuột mới nhận, không tự ý can thiệp.</p>
+        <p>• <b>Khôi phục (Recovery):</b> Nếu AI đoán sai hoặc người học đổi ý, có nút <b>Hoàn tác (Undo)</b> để quay về chữ ban đầu.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main 2-Column Split Workspace -->
+  <main class="workspace-grid">
+
+    <!-- LEFT COLUMN: LECTURE SCREEN (70% COMMON CONTEXT) -->
+    <section class="lecture-column">
+      <div class="card-header">
+        <div class="header-tag">
+          <span class="red-dot"></span> ĐANG HỌC TRỰC TUYẾN • <span id="lectureTime">Phút 14:20</span>
+        </div>
+        <div class="slide-number"><span id="slideIndicator">Slide 06 / 22</span> <button class="help-btn inline" data-help="context" title="Bấm xem bối cảnh bài giảng">?</button></div>
+      </div>
+
+      <!-- Slide Switcher Controls -->
+      <div class="slide-nav-bar">
+        <button class="btn-slide-nav" id="btnPrevSlide" title="Về slide trước">◀ Trước</button>
+        <div class="slide-pill-selector">
+          <span class="selector-icon">📑</span>
+          <select id="slideSelect" class="slide-select-dropdown" title="Chọn slide bài giảng">
+            <option value="01">Slide 01: Giới thiệu Session 4 - Stakeholder</option>
+            <option value="02">Slide 02: Mục lục Topic buổi học</option>
+            <option value="03">Slide 03: Khái niệm Cross-Functional Teams</option>
+            <option value="04">Slide 04: Agile Scrum Events</option>
+            <option value="05">Slide 05: Mô hình phát triển nhóm Tuckman</option>
+            <option value="06" selected>Slide 06: Ma trận RASIC (Mặc định)</option>
+            <option value="07">Slide 07: Bộ công cụ làm việc nhóm (Tools for Work)</option>
+            <option value="08">Slide 08: Giải lao & Hỏi đáp nhanh</option>
+            <option value="09">Slide 09: Bắt đầu phần Workshop nhóm (Let's Start)</option>
+            <option value="10">Slide 10: Bài tập 1: Xây dựng ma trận RASIC</option>
+            <option value="11">Slide 11: Chuyển tiếp Part 2: Stakeholder Engagement</option>
+            <option value="12">Slide 12: Quy trình quản lý Stakeholder (4 bước)</option>
+            <option value="13">Slide 13: Định nghĩa Stakeholder (Bên liên quan)</option>
+            <option value="14">Slide 14: Mô hình phong cách giao tiếp DISC</option>
+            <option value="15">Slide 15: Phân tích Stakeholder (Ma trận Power/Interest)</option>
+            <option value="16">Slide 16: Mẫu bảng chiến lược Stakeholder (Strategy Table)</option>
+            <option value="17">Slide 17: Tình huống thực tế: Ứng xử với Stakeholder</option>
+            <option value="18">Slide 18: Các yếu tố quan hệ trong tổ chức (4T)</option>
+            <option value="19">Slide 19: Nguyên tắc giao tiếp với Stakeholder</option>
+            <option value="20">Slide 20: Thực hành đóng vai xử lý tình huống (Role-play)</option>
+            <option value="21">Slide 21: Bài tập 2: Chiến lược Stakeholder nghề nghiệp</option>
+            <option value="22">Slide 22: Q&A - Hỏi đáp và Tổng kết buổi học</option>
+          </select>
+        </div>
+        <button class="btn-slide-nav" id="btnNextSlide" title="Sang slide tiếp theo">Tiếp ▶</button>
+      </div>
+
+      <!-- Slide Image -->
+      <div class="slide-display-frame">
+        <img src="assets/slide_06.png" alt="Slide bài giảng" class="slide-photo" id="slideImg">
+      </div>
+
+      <!-- Teacher Audio Transcript Caption -->
+      <div class="teacher-speech-bubble">
+        <div class="speech-avatar">👨‍🏫</div>
+        <div class="speech-content">
+          <div class="speaker-name" id="speakerTopic">Giảng viên đang nói nhanh (Ma trận RASIC):</div>
+          <p id="speakerQuote">"...Các bạn chú ý chữ <strong>L</strong> ở đây là <strong>Làm trực tiếp</strong>, người chịu trách nhiệm hoàn thành. Còn chữ <strong>P</strong> là <strong>Phê duyệt</strong> kết quả nhé..."</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN: SMART NOTE-TAKING (OPTION A INTERACTION) -->
+    <section class="notepad-column">
+      <div class="card-header">
+        <div class="notepad-title">
+          <span>📒 Sổ tay ghi chép</span>
+          <span class="sync-badge" id="syncBadge">✓ Đã kết nối Slide 06</span>
+          <button class="help-btn inline" data-help="autocomplete" title="Bấm xem cơ chế tự động điền">?</button>
+        </div>
+        <span class="user-role-tag">Bạn đang thao tác</span>
+      </div>
+
+      <!-- Quick Try Buttons (Tự động thay đổi theo từng Slide) -->
+      <div class="quick-try-bar">
+        <span class="try-label">👉 Thử nhanh theo slide này:</span>
+        <div class="dynamic-sample-btns" id="dynamicSampleBtns">
+          <!-- Populated by JS based on active slide -->
+        </div>
+        <button class="help-btn inline" data-help="scenarios" title="Xem hướng dẫn nút thử nhanh">?</button>
+      </div>
+
+
+      <!-- Note Taking Box -->
+      <div class="typing-workspace">
+
+        <!-- Input Row -->
+        <div class="input-container">
+          <label for="mainInput" class="input-label">
+            <span>Nhập ghi chú của bạn:</span>
+            <span class="key-hint">Nhấn phím <b>Tab</b> để nhận gợi ý <button class="help-btn inline" data-help="tabKey">?</button></span>
+          </label>
+          <div class="input-field-wrapper">
+            <input 
+              type="text" 
+              id="mainInput" 
+              class="primary-input" 
+              placeholder="Gõ thử từ viết tắt vào đây: l, p, h hoặc rasic..." 
+              autocomplete="off" 
+              autofocus
+            >
+          </div>
+        </div>
+
+        <!-- AI Suggestion Box (Clean, High Visibility Pop-card) -->
+        <div class="suggestion-pop-card hidden" id="suggestionCard">
+          <div class="sugg-header">
+            <span class="sugg-badge">✨ AI phát hiện từ viết tắt:</span>
+            <span class="sugg-source">Căn cứ: Slide 06 (Ma trận RASIC)</span>
+          </div>
+
+          <div class="sugg-preview-text" id="suggestionText">
+            L - Làm trực tiếp: Trách nhiệm chính hoàn thành công việc
+          </div>
+
+          <div class="sugg-actions">
+            <button class="btn-accept" id="btnAccept">
+              <span class="btn-key">Tab ⇥</span> Nhận gợi ý đầy đủ
+            </button>
+            <button class="btn-dismiss" id="btnDismiss">
+              Bỏ qua [Esc]
+            </button>
+          </div>
+        </div>
+
+        <!-- Undo & Recovery Banner -->
+        <div class="undo-banner hidden" id="undoBanner">
+          <div class="undo-msg">
+            <span class="green-check">✓</span> Đã bung câu hoàn chỉnh từ chữ viết tắt.
+          </div>
+          <div class="undo-buttons">
+            <button class="btn-undo-action" id="btnUndo">
+              <span>↩</span> Hoàn tác (Quay lại chữ tắt ban đầu)
+            </button>
+            <button class="help-btn inline" data-help="recovery">?</button>
+          </div>
+        </div>
+
+        <!-- Save Button -->
+        <div class="submit-row">
+          <button class="btn-save" id="btnSave">
+            💾 Lưu vào sổ ghi chép <kbd>Enter</kbd>
+          </button>
+        </div>
+
+        <!-- Saved Notes Archive -->
+        <div class="notes-archive">
+          <div class="archive-header">
+            <span>Ghi chú đã lưu trong bài:</span>
+            <span class="note-count" id="noteCount">1 ghi chú</span>
+          </div>
+          <div class="notes-feed" id="notesFeed">
+            <div class="feed-item">
+              <span class="feed-time">14:05</span>
+              <p class="feed-text">Cross-Functional Team: Đội ngũ gồm nhiều phòng ban cùng làm một sản phẩm.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Human-AI Metrics Footer -->
+      <div class="footer-metrics">
+        <div class="metric-item">
+          <span class="m-label">Quyền làm chủ: <button class="help-btn inline" data-help="agency">?</button></span>
+          <span class="m-value purple">Người học quyết định</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">Độ chính xác:</span>
+          <span class="m-value green">Khớp 100% Slide 06</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">Khôi phục khi sai:</span>
+          <span class="m-value yellow">1 nút bấm Hoàn tác</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Interactive Help Modal -->
+  <div class="help-overlay hidden" id="helpOverlay">
+    <div class="help-card">
+      <div class="help-header">
+        <h3 id="helpTitle">Tiêu đề tính năng</h3>
+        <button class="btn-close-help" id="btnCloseHelp">✕</button>
+      </div>
+      <div class="help-content">
+        <div class="help-block">
+          <div class="block-title">🎯 Tính năng này để làm gì?</div>
+          <p id="helpPurpose">Mô tả...</p>
+        </div>
+        <div class="help-block">
+          <div class="block-title">🖐️ Cách bạn dùng trên màn hình</div>
+          <p id="helpUsage">Cách dùng...</p>
+        </div>
+        <div class="help-block highlight">
+          <div class="block-title">🤖 Ý nghĩa thiết kế Human-AI (Tiêu chí chấm thi)</div>
+          <p id="helpMetric">Ý nghĩa...</p>
+        </div>
+      </div>
+      <div class="help-footer">
+        <button class="btn-understand" id="btnUnderstand">Đã hiểu 👍</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+<script>
+/* Alt+R trong phương án: nhờ trang hub reset về ban đầu */
+document.addEventListener('keydown', function (e) {
+  if (e.altKey && e.key.toLowerCase() === 'r' && window.parent !== window) { e.preventDefault(); window.parent.postMessage({ type: 'reset' }, '*'); }
+});
+</script>
+</body>
+</html>

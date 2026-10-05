@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lớp học online · Ghi chú khi nghe giảng</title>
+<style>
+  :root {
+    --bg: #0b1220; --card: #1e293b; --panel: #162033; --field: #0f172a; --ink: #e2e8f0; --muted: #94a3b8; --line: #334155;
+    --accent: #6366f1; --accent-soft: #2e3170; --warn: #fcd34d; --warn-soft: #4a3a10; --ok: #86efac; --ok-soft: #14532d; --red: #ef4444;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.5 system-ui, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
+  .hidden { display: none !important; }
+  .muted { color: var(--muted); font-size: 13px; }
+  h2 { font-size: 16px; margin: 0 0 8px; }
+  button { font: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px; padding: 6px 12px; }
+  button:hover:not(:disabled) { border-color: var(--accent); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.small { padding: 2px 9px; font-size: 13px; }
+  input[type=text], textarea, select { font: inherit; width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--field); color: var(--ink); }
+  select option { background: var(--card); color: var(--ink); }
+  kbd { font: 12px monospace; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--field); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .between { justify-content: space-between; }
+
+  /* Header: menu A / B / C */
+  .top { background: var(--card); border-bottom: 1px solid var(--line); padding: 10px 20px; }
+  .menu { display: flex; gap: 10px; }
+  .menu button { font-size: 18px; font-weight: 600; padding: 6px 30px; }
+  .menu button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* Khung bài giảng dùng chung */
+  .grid { max-width: 1320px; margin: 0 auto; padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .live { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--red); margin-right: 6px; }
+  .slidenav { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .slidenav select { width: auto; max-width: 62%; padding: 4px 8px; }
+  .frame { aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #fff; border: 1px solid var(--line); }
+  .frame img { width: 100%; height: 100%; display: block; object-fit: contain; }
+  .speech { display: flex; gap: 10px; margin-top: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+  .speech .av { font-size: 26px; }
+  .speech b.t { display: block; font-size: 13px; color: var(--muted); }
+  .speech p { margin: 2px 0 0; }
+  .speech strong { color: #fde047; }
+
+  /* Thành phần ghi chú dùng chung */
+  .tag { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); background: var(--panel); margin-right: 6px; }
+  .tag.ai { background: var(--accent-soft); border-color: #4f52b2; color: #c7d2fe; }
+  .tag.low { background: var(--warn-soft); border-color: #7a5e14; color: var(--warn); }
+  .item { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; background: var(--panel); }
+  .item .body { flex: 1; }
+  .empty { color: var(--muted); font-size: 13px; padding: 4px 2px; }
+  .saved { background: var(--ok-soft); border: 1px solid #1f7a3d; border-radius: 8px; padding: 6px 12px; margin-bottom: 10px; color: var(--ok); }
+
+  /* A */
+  .suggest { background: var(--accent-soft); border: 1px solid #4f52b2; border-radius: 8px; padding: 10px 12px; margin: 10px 0; }
+  .suggest .stext { margin: 8px 0; font-weight: 600; }
+  .banner { display: flex; justify-content: space-between; gap: 8px; align-items: center; background: var(--ok-soft); border: 1px solid #1f7a3d; color: var(--ok); border-radius: 8px; padding: 6px 12px; margin: 10px 0; }
+  .banner button { color: var(--ink); }
+  .archive { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
+
+  /* B */
+  .pin { display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin-bottom: 10px; background: var(--panel); }
+  .pin .l { flex: 1; min-width: 0; }
+  .thumb { width: 220px; flex: none; position: relative; border: 1px solid var(--line); cursor: pointer; line-height: 0; }
+  .thumb img { width: 100%; }
+  @media (max-width: 560px) { .pin { flex-direction: column; } }
+  .rbox { position: absolute; border: 2px solid var(--red); background: rgba(239,68,68,.14); }
+  .modal { position: fixed; inset: 0; background: rgba(2,6,23,.7); display: flex; align-items: center; justify-content: center; z-index: 10; padding: 12px; }
+  .mbox { background: var(--card); border-radius: 12px; padding: 16px; width: min(900px, 100%); max-height: 100%; overflow: auto; }
+  .big { position: relative; line-height: 0; border: 1px solid var(--line); margin-bottom: 10px; user-select: none; touch-action: none; }
+  .big img { width: 100%; }
+  .big .rbox { cursor: move; }
+  .big .h { position: absolute; right: -7px; bottom: -7px; width: 13px; height: 13px; background: var(--red); cursor: nwse-resize; }
+
+  /* C */
+  textarea { min-height: 280px; resize: vertical; }
+  .cornell { display: grid; grid-template-columns: 32% 1fr; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); }
+  .cornell > div { padding: 8px 10px; }
+  .cornell .hd { background: var(--card); font-weight: 600; font-size: 13px; border-bottom: 1px solid var(--line); }
+  .cornell .cues { border-right: 1px solid var(--line); }
+  .cornell .sum { grid-column: 1 / -1; border-top: 1px solid var(--line); background: #1a2540; }
+  .cornell h4 { margin: 8px 0 2px; font-size: 14px; color: #93c5fd; }
+  .cornell ul { margin: 2px 0 6px; padding-left: 18px; }
+  .cornell [contenteditable=true] { outline: 1px dashed var(--accent); border-radius: 4px; }
+</style>
+</head>
+<body>
+<header class="top"><nav class="menu" id="menu"></nav></header>
+<main class="grid">
+  <section>
+    <div class="live"><span><span class="dot"></span>ĐANG HỌC TRỰC TUYẾN · Phút <span id="vtime"></span></span><span class="muted" id="slidelbl"></span></div>
+    <div class="slidenav">
+      <button class="small" id="prev">◀ Trước</button>
+      <select id="sel" title="Chọn slide"></select>
+      <button class="small" id="next">Tiếp ▶</button>
+    </div>
+    <div class="frame"><img id="slideimg" alt="Slide bài giảng"></div>
+    <div class="speech"><div class="av">👨‍🏫</div><div><b class="t" id="vtopic"></b><p id="vquote"></p></div></div>
+  </section>
+  <section class="card" id="panel"></section>
+</main>
+
+<script src="data.js"></script>
+<script>
+/* ================= Phần dùng chung: bài giảng, slide, lời giảng ================= */
+const D = window.SLIDE_DATA, TOTAL = 22, START = 4, W = 1280, H = 720;
+const ORDER = (new URLSearchParams(location.search).get("order") || "ABC").toUpperCase().split("").filter(c => "ABC".includes(c));
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const tokens = v => v.trim().split(/\s+/).filter(Boolean);
+const pad = n => String(n).padStart(2, "0");
+const img = n => `slides/s${pad(n)}.jpg`;
+const pct = b => `left:${b[0] / W * 100}%;top:${b[1] / H * 100}%;width:${(b[2] - b[0]) / W * 100}%;height:${(b[3] - b[1]) / H * 100}%`;
+
+let slide = START, cur = null, mod = null;
+
+$("#sel").innerHTML = Object.keys(D).map(n => `<option value="${n}">Slide ${pad(n)}: ${esc(D[n].title)}</option>`).join("");
+function updateLecture() {
+  const d = D[slide];
+  $("#slideimg").src = img(slide);
+  $("#slidelbl").textContent = `Slide ${pad(slide)} / ${TOTAL}`;
+  $("#vtime").textContent = d.time;
+  $("#vtopic").textContent = d.topic;
+  $("#vquote").innerHTML = d.quote;
+  $("#sel").value = slide;
+  $("#prev").disabled = slide <= 1; $("#next").disabled = slide >= TOTAL;
+}
+function goSlide(n) {
+  const prev = slide;
+  slide = clamp(n, 1, TOTAL);
+  updateLecture();
+  if (mod && mod.onSlide && prev !== slide) mod.onSlide(prev, slide);
+}
+$("#prev").onclick = () => goSlide(slide - 1);
+$("#next").onclick = () => goSlide(slide + 1);
+$("#sel").onchange = e => goSlide(+e.target.value);
+
+function renderMenu() {
+  $("#menu").innerHTML = ORDER.map(o => `<button class="${cur === o ? "on" : ""}" data-o="${o}">${o}</button>`).join("");
+}
+function select(o) {
+  cur = o; slide = START; updateLecture(); renderMenu();
+  mod = ({ A: ModA, B: ModB, C: ModC })[o]();
+  mod.mount();
+}
+$("#menu").addEventListener("click", e => { const b = e.target.closest("[data-o]"); if (b) select(b.dataset.o); });
+document.addEventListener("keydown", e => { if (e.altKey && e.key.toLowerCase() === "r") { e.preventDefault(); select(cur || ORDER[0]); } });
+
+/* ================= Option A: gõ viết tắt, AI gợi ý, Tab để nhận ================= */
+function ModA() {
+  let match = null, raw = "", accepted = "", feed = [];
+  const find = text => {
+    const v = text.trim().toLowerCase();
+    if (!v) return null;
+    const own = D[slide].kb.find(i => i.keywords.includes(v));
+    if (own) return own;
+    for (const n of Object.keys(D)) { if (+n === slide) continue; const it = D[n].kb.find(i => i.keywords.includes(v)); if (it) return it; }
+    return null;
+  };
+  const feedHtml = () => feed.length ? feed.map(f => `<div class="item"><span class="tag">${f.time}</span><div class="body"><b>[Slide ${pad(f.slide)}]</b> ${esc(f.text)}</div>${f.ai ? `<span class="tag ai">AI mở rộng</span>` : ""}</div>`).join("") : `<div class="empty">Chưa có ghi chú nào.</div>`;
+  const clearSuggestion = () => { match = null; $("#sugg").classList.add("hidden"); };
+  function accept() {
+    if (!match) return;
+    raw = $("#in").value; accepted = match.fullText;
+    $("#in").value = match.fullText; clearSuggestion(); $("#undo").classList.remove("hidden"); $("#in").focus();
+  }
+  function save() {
+    const text = $("#in").value.trim(); if (!text) return;
+    feed.push({ time: D[slide].time, slide, text, ai: !!accepted && text === accepted });
+    $("#in").value = ""; raw = ""; accepted = ""; clearSuggestion(); $("#undo").classList.add("hidden");
+    $("#feed").innerHTML = feedHtml(); $("#cnt").textContent = feed.length + " ghi chú"; $("#in").focus();
+  }
+  return {
+    mount() {
+      $("#panel").innerHTML = `
+        <h2>Sổ ghi chép</h2>
+        <div class="row between muted" style="margin-bottom:4px"><span>Nhập ghi chú của bạn:</span><span>Nhấn phím <kbd>Tab</kbd> để nhận gợi ý</span></div>
+        <input id="in" type="text" autocomplete="off" spellcheck="false" placeholder="Gõ ghi chú rồi nhấn Enter">
+        <div class="suggest hidden" id="sugg">
+          <div class="row between"><span class="tag ai">✨ AI phát hiện từ viết tắt</span><span class="muted" id="src"></span></div>
+          <div class="stext" id="stext"></div>
+          <div class="row"><button class="primary" id="acc"><kbd>Tab</kbd> Nhận gợi ý đầy đủ</button><button id="dis">Bỏ qua [Esc]</button></div>
+        </div>
+        <div class="banner hidden" id="undo"><span>✓ Đã bung câu hoàn chỉnh từ chữ viết tắt.</span><button class="small" id="undoBtn">↩ Hoàn tác (quay lại chữ tắt ban đầu)</button></div>
+        <div class="row" style="margin:10px 0"><button class="primary" id="save">💾 Lưu vào sổ ghi chép <kbd>Enter</kbd></button></div>
+        <div class="archive"><div class="row between"><b class="muted">GHI CHÚ ĐÃ LƯU TRONG BÀI:</b><span class="tag" id="cnt">0 ghi chú</span></div><div id="feed" style="margin-top:8px">${feedHtml()}</div></div>`;
+      const inp = $("#in");
+      inp.addEventListener("input", () => {
+        $("#undo").classList.add("hidden");
+        match = find(inp.value);
+        if (match) { $("#stext").textContent = match.fullText; $("#src").textContent = "Căn cứ: " + match.source; $("#sugg").classList.remove("hidden"); }
+        else $("#sugg").classList.add("hidden");
+      });
+      inp.addEventListener("keydown", e => {
+        if (e.key === "Tab" && match) { e.preventDefault(); accept(); }
+        else if (e.key === "Escape" && match) { e.preventDefault(); clearSuggestion(); }
+        else if (e.key === "Enter") { e.preventDefault(); save(); }
+      });
+      $("#acc").onclick = accept;
+      $("#dis").onclick = () => { clearSuggestion(); inp.focus(); };
+      $("#undoBtn").onclick = () => { if (!raw) return; inp.value = raw; $("#undo").classList.add("hidden"); inp.focus(); inp.dispatchEvent(new Event("input")); };
+      $("#save").onclick = save;
+      inp.focus();
+    },
+    onSlide() { $("#in").value = ""; clearSuggestion(); $("#undo").classList.add("hidden"); }
+  };
+}
+
+/* ================= Option B: gõ viết tắt, Ghim, AI chụp slide và khoanh vùng ================= */
+const bx = (x1, y1, x2, y2) => [x1 - 3, y1 - 3, x2 + 3, y2 + 3];
+const TITLE_BOX = [60, 60, 560, 140];
+const BOXES = {   // vùng khoanh theo slide: slide 4 (Scrum) và slide 6 (RASIC)
+  4: [
+    { aliases: ["daily", "daily scrum", "ds"], cue: "Daily Scrum", box: bx(738, 415, 872, 548) },
+    { aliases: ["retro", "retrospective", "sprint retro"], cue: "Sprint Retro", box: bx(468, 205, 602, 335) },
+    { aliases: ["sprint", "sp"], cue: "Sprint", box: bx(606, 216, 730, 254) },
+    { aliases: ["planning", "sp plan"], cue: "Sprint Planning", box: bx(736, 224, 878, 352) },
+    { aliases: ["review", "sprint review"], cue: "Sprint Review", box: bx(468, 412, 602, 545) },
+    { aliases: ["pb", "product backlog"], cue: "Product Backlog", box: bx(830, 163, 982, 188) },
+    { aliases: ["dod"], cue: "Definition of Done", box: bx(612, 545, 725, 610) }
+  ],
+  6: [
+    { aliases: ["rasic"], cue: "RASIC", box: bx(72, 68, 600, 118) },
+    { aliases: ["l"], cue: "L · Làm trực tiếp", box: bx(84, 150, 372, 168) },
+    { aliases: ["h"], cue: "H · Hỗ trợ", box: bx(84, 167, 372, 185) },
+    { aliases: ["p"], cue: "P · Phê duyệt", box: bx(84, 183, 372, 201) },
+    { aliases: ["c"], cue: "C · Cố vấn", box: bx(84, 200, 372, 218) },
+    { aliases: ["t"], cue: "T · Thông báo", box: bx(84, 217, 372, 235) }
+  ]
+};
+const boxLookup = (n, tok) => (BOXES[n] || []).find(c => c.aliases.includes(tok.toLowerCase()));
+
+function ModB() {
+  let pins = [], n = 0;
+  const listHtml = ro => !pins.length ? `<div class="empty">Chưa ghim gì.</div>` : pins.map(p => `
+    <div class="pin"><div class="l">
+      ${p.edit ? `<input type="text" id="e${p.id}" value="${esc(p.raw)}">` : `<strong>${esc(p.raw)}</strong>`}
+      <div class="muted">Slide ${pad(p.slide)} · ${p.time}</div>
+      <div style="margin:4px 0">${p.unsure
+        ? `<span class="tag low">Chưa chắc: không tìm thấy đoạn khớp, hãy chỉnh vùng khoanh</span>`
+        : `<span class="tag ai">AI khoanh từ slide ${pad(p.slide)}${p.cues.length ? " theo " + esc(p.cues.join(", ")) : ""}</span>`}${p.edited ? `<span class="tag">Bạn đã chỉnh vùng</span>` : ""}</div>
+      ${ro ? "" : `<div class="row">
+        <button class="small" data-b="region" data-id="${p.id}">Chỉnh vùng khoanh</button>
+        ${p.edit ? `<button class="small" data-b="ok" data-id="${p.id}">Xong</button>` : `<button class="small" data-b="edit" data-id="${p.id}">Sửa chữ</button>`}
+        <button class="small" data-b="del" data-id="${p.id}">Xóa ghim</button></div>`}
+    </div>
+    <div class="thumb" ${ro ? "" : `data-b="region" data-id="${p.id}"`}><img src="${img(p.slide)}" alt="Ảnh chụp slide ${p.slide}"><div class="rbox" style="${pct(p.box)}"></div></div></div>`).join("");
+  const refresh = () => { $("#list").innerHTML = listHtml(false); $("#save").disabled = !pins.length; };
+  function pin() {
+    const inp = $("#in"), v = inp.value.trim(); if (!v) return;
+    const whole = boxLookup(slide, v);
+    const hits = whole ? [whole] : tokens(v).map(t => boxLookup(slide, t)).filter(Boolean);
+    let box, unsure = false;
+    if (hits.length) {
+      const bs = hits.map(c => c.box);
+      box = [Math.min(...bs.map(b => b[0])), Math.min(...bs.map(b => b[1])), Math.max(...bs.map(b => b[2])), Math.max(...bs.map(b => b[3]))];
+    } else { box = TITLE_BOX.slice(); unsure = true; }
+    pins.push({ id: ++n, raw: v, slide, time: D[slide].time, box, unsure, edited: false, edit: false, cues: [...new Set(hits.map(c => c.cue))] });
+    inp.value = ""; refresh(); inp.focus();
+  }
+  function editor(id) {
+    const p = pins.find(x => x.id === id);
+    let b = p.box.slice();
+    const ov = document.createElement("div");
+    ov.className = "modal";
+    ov.innerHTML = `<div class="mbox"><h2>Chỉnh vùng khoanh</h2>
+      <div class="big" id="big"><img src="${img(p.slide)}" draggable="false"><div class="rbox" id="rb"><div class="h" id="rh"></div></div></div>
+      <div class="row"><button class="primary" id="ok">Xong</button><button id="cancel">Hủy</button></div></div>`;
+    document.body.appendChild(ov);
+    const big = ov.querySelector("#big"), rb = ov.querySelector("#rb");
+    const paint = () => rb.setAttribute("style", pct(b));
+    paint();
+    let mode = null, sx = 0, sy = 0, sb = b;
+    const down = (e, m) => { e.preventDefault(); e.stopPropagation(); mode = m; sx = e.clientX; sy = e.clientY; sb = b.slice(); e.target.setPointerCapture(e.pointerId); };
+    rb.addEventListener("pointerdown", e => { if (e.target.id !== "rh") down(e, "move"); });
+    ov.querySelector("#rh").addEventListener("pointerdown", e => down(e, "size"));
+    ov.addEventListener("pointermove", e => {
+      if (!mode) return;
+      const s = W / big.getBoundingClientRect().width, dx = (e.clientX - sx) * s, dy = (e.clientY - sy) * s;
+      if (mode === "move") {
+        const w = sb[2] - sb[0], h = sb[3] - sb[1], x = clamp(sb[0] + dx, 0, W - w), y = clamp(sb[1] + dy, 0, H - h);
+        b = [x, y, x + w, y + h];
+      } else b = [sb[0], sb[1], clamp(sb[2] + dx, sb[0] + 20, W), clamp(sb[3] + dy, sb[1] + 12, H)];
+      paint();
+    });
+    ov.addEventListener("pointerup", () => { mode = null; });
+    const close = () => { ov.remove(); document.removeEventListener("keydown", onKey); };
+    const onKey = e => { if (e.key === "Escape") close(); };
+    document.addEventListener("keydown", onKey);
+    ov.querySelector("#cancel").onclick = close;
+    ov.querySelector("#ok").onclick = () => { p.box = b; p.edited = true; p.unsure = false; close(); refresh(); };
+  }
+  return {
+    mount() {
+      $("#panel").innerHTML = `
+        <h2>Sổ ghi chép</h2>
+        <div class="row" style="flex-wrap:nowrap;margin-bottom:10px"><input id="in" type="text" autocomplete="off" spellcheck="false" placeholder="Gõ từ viết tắt rồi bấm Ghim"><button class="primary" id="pin">📌 Ghim</button></div>
+        <div id="list"></div>
+        <div class="row"><button class="primary" id="save" disabled>Lưu ghi chú</button></div>`;
+      $("#pin").onclick = pin;
+      $("#in").addEventListener("keydown", e => { if (e.key === "Enter") pin(); });
+      $("#save").onclick = () => {
+        $("#panel").innerHTML = `<div class="saved">Đã lưu ghi chú</div>${listHtml(true)}<div class="row"><button class="small" id="again">Làm lại</button></div>`;
+        $("#again").onclick = () => select("B");
+      };
+      $("#list").addEventListener("click", e => {
+        const b = e.target.closest("[data-b]"); if (!b) return;
+        const id = +b.dataset.id, p = pins.find(x => x.id === id);
+        if (b.dataset.b === "del") pins = pins.filter(x => x.id !== id);
+        if (b.dataset.b === "edit") p.edit = true;
+        if (b.dataset.b === "ok") { const v = $("#e" + id).value.trim(); if (v) p.raw = v; p.edit = false; }
+        if (b.dataset.b === "region") return editor(id);
+        refresh();
+      });
+      refresh(); $("#in").focus();
+    }
+  };
+}
+
+/* ================= Option C: gõ nháp theo slide, hết buổi AI tổng hợp thành Cornell ================= */
+function ModC() {
+  let notes = {}, phase = "write", edit = false, data = null;
+  const hasNote = () => Object.values(notes).some(v => (v || "").trim());
+  const isQuestion = t => { const l = t.toLowerCase(); return t.includes("?") || l.startsWith("tại sao") || l.startsWith("sao") || l.startsWith("là gì") || l.startsWith("thế nào") || l.includes("chưa hiểu") || l.includes("hỏi") || l.includes("cần làm rõ"); };
+  function synthesize() {
+    const lines = [];
+    Object.keys(notes).map(Number).sort((a, b) => a - b).forEach(n => (notes[n] || "").split("\n").forEach(l => { const t = l.trim().replace(/^[-•*]\s*/, ""); if (t) lines.push({ n, text: t }); }));
+    const qs = lines.filter(l => isQuestion(l.text)), cs = lines.filter(l => !isQuestion(l.text));
+    const grouped = {};
+    cs.forEach(l => (grouped[l.n] = grouped[l.n] || []).push(l.text));
+    const slides = [...new Set(lines.map(l => l.n))];
+    return {
+      cues: qs.map(q => ({ title: q.text, desc: `Xuất phát từ ghi chép Slide ${pad(q.n)} (${D[q.n].title}). Cần đào sâu làm rõ thêm.` })),
+      notes: Object.keys(grouped).map(n => ({ heading: `Ghi chú Slide ${pad(n)}: ${D[n].title}`, bullets: grouped[n] })),
+      summary: lines.length
+        ? `Tổng hợp từ ${lines.length} ý bạn đã ghi ở ${slides.length} slide (${slides.map(n => D[n].title).join("; ")}), trong đó ${qs.length} điểm cần làm rõ thêm.`
+        : "Chưa có ghi chú nào để tổng hợp.",
+      source: `Ghi chú thực tế của người học trên ${slides.length} slide bài giảng`
+    };
+  }
+  function updateButton() {
+    const on = hasNote() || slide === TOTAL;
+    $("#sum").disabled = !on;
+    $("#chint").textContent = on ? "✨ Bạn có thể bấm Tổng hợp note bài học bất cứ lúc nào." : "💡 Ghi chú ít nhất một ý, hoặc xem đến slide cuối cùng, để mở nút tổng hợp Cornell Note.";
+  }
+  function loadSlideNote() {
+    $("#ctitle").textContent = `Ghi chú Slide ${pad(slide)}: ${D[slide].title}`;
+    $("#ctag").textContent = `Slide ${pad(slide)}`;
+    $("#ta").value = notes[slide] || "";
+    $("#cc").textContent = `${$("#ta").value.trim().length} ký tự`;
+    updateButton();
+  }
+  function writeView() {
+    phase = "write";
+    $("#panel").innerHTML = `
+      <div class="row between"><h2 id="ctitle"></h2><span class="muted">Lưu riêng theo slide</span></div>
+      <textarea id="ta" placeholder="Ghi chú cho slide này...&#10;&#10;• Ý chính hoặc thuật ngữ cần nhớ&#10;• Đặt dấu (?) cho những thắc mắc hoặc câu hỏi cần làm rõ sau này"></textarea>
+      <div class="row between" style="margin-top:10px"><span class="muted"><span id="cc"></span> <span class="tag" id="ctag"></span></span><button class="primary" id="sum" disabled>✨ Tổng hợp note bài học</button></div>
+      <div class="muted" id="chint" style="margin-top:6px"></div>`;
+    loadSlideNote();
+    $("#ta").addEventListener("input", () => { notes[slide] = $("#ta").value; $("#cc").textContent = `${$("#ta").value.trim().length} ký tự`; updateButton(); });
+    $("#sum").onclick = () => { data = synthesize(); edit = false; cornellView(); };
+    $("#ta").focus();
+  }
+  function cornellView() {
+    phase = "cornell";
+    const date = new Date().toLocaleDateString("vi-VN");
+    $("#panel").innerHTML = `
+      <div class="row between" style="margin-bottom:10px">
+        <button class="small" id="back">◀ Quay lại Slide</button>
+        <span class="row"><button class="small" id="edit">✏️ Sửa ghi chú</button><button class="small" id="dl">📥 Tải về (.md)</button></span>
+      </div>
+      <h2>Cornell Note tổng hợp bài học</h2>
+      <div class="muted" style="margin-bottom:8px">Ngày học: ${date} · Nguồn: ${esc(data.source)}</div>
+      <div class="cornell">
+        <div class="hd">❓ Câu hỏi và điểm cần làm rõ (Cues)</div><div class="hd">📝 Nội dung bài học (Notes)</div>
+        <div class="cues" id="cues">${data.cues.length ? data.cues.map(c => `<h4>${esc(c.title)}</h4><div class="muted">${esc(c.desc)}</div>`).join("") : `<div class="muted">Không có câu hỏi nào được đánh dấu.</div>`}</div>
+        <div id="nts">${data.notes.length ? data.notes.map(g => `<h4>${esc(g.heading)}</h4><ul>${g.bullets.map(b => `<li>${esc(b)}</li>`).join("")}</ul>`).join("") : `<div class="muted">Không có ghi chú nội dung.</div>`}</div>
+        <div class="sum"><strong>📌 Tóm tắt (Summary)</strong><div id="smy">${esc(data.summary)}</div></div>
+      </div>`;
+    $("#back").onclick = writeView;
+    $("#edit").onclick = () => {
+      edit = !edit;
+      ["cues", "nts", "smy"].forEach(id => { $("#" + id).contentEditable = edit ? "true" : "false"; });
+      $("#edit").textContent = edit ? "💾 Hoàn tất sửa" : "✏️ Sửa ghi chú";
+    };
+    $("#dl").onclick = () => {
+      const md = `# Cornell Note\n- **Ngày học:** ${date}\n\n---\n\n## Câu hỏi và điểm cần làm rõ (Cues)\n${$("#cues").innerText.trim()}\n\n---\n\n## Nội dung bài học (Notes)\n${$("#nts").innerText.trim()}\n\n---\n\n## Tóm tắt (Summary)\n${$("#smy").innerText.trim()}\n`;
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([md], { type: "text/markdown;charset=utf-8" }));
+      a.download = "Cornell_Notes.md"; document.body.appendChild(a); a.click(); a.remove();
+    };
+  }
+  return {
+    mount() { writeView(); },
+    onSlide() { if (phase === "write") loadSlideNote(); }
+  };
+}
+
+updateLecture();
+select(ORDER[0]);
+</script>
+</body>
+</html>
